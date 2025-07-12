@@ -1,6 +1,9 @@
+import 'package:echomind/pages/auth/forgot_password_page.dart';
 import 'package:echomind/pages/auth/register_page.dart';
+import 'package:echomind/pages/home_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:echomind/services/google_signin_service.dart';
 
 const Color kPrimaryColor = Color(0xFF5E35B1);
 
@@ -138,12 +141,23 @@ class _login_pageState extends State<login_page> {
             ),
 
             const SizedBox(height: 12),
-            Center(
-              child: Text(
-                'Forgot password?',
-                style: TextStyle(color: kPrimaryColor.withOpacity(0.7)),
+        Center(
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ForgotPasswordPage()),
+              );
+            },
+            child: Text(
+              'Forgot password?',
+              style: TextStyle(
+                color: kPrimaryColor.withOpacity(0.7),
+                fontWeight: FontWeight.bold,
               ),
             ),
+          ),
+        ),
 
             const SizedBox(height: 32),
 
@@ -165,8 +179,17 @@ class _login_pageState extends State<login_page> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () {
-                  // TODO: Add Google Sign-In
+                onPressed: () async {
+                  try {
+                    await GoogleSignInService.signInWithGoogle();
+                    MaterialPageRoute(
+                      builder: (context) => const HomePage(),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Google Sign-in failed: $e')),
+                    );
+                  }
                 },
                 icon: Icon(Icons.g_mobiledata, color: Colors.red),
                 label: const Text('Continue with Google'),
