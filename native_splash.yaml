@@ -1,0 +1,14 @@
+flutter_native_splash:
+  color: "#A30AFF"
+  image: assets/images/a-logo-for-podbrief.png
+  android: true
+  ios: true
+  web: false
+
+  android_12:
+    color: "#A30AFF"
+    image: assets/images/a-logo-for-podbrief.png
+    branding: assets/images/freepik__an-abstract-logo-for-podbrief-using-interconnected__51500.png
+
+
+

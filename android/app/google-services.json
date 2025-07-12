@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "337046367169",
+    "project_id": "podbrief-cd76b",
+    "storage_bucket": "podbrief-cd76b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:337046367169:android:dff16f0dbe7f54f9129d40",
+        "android_client_info": {
+          "package_name": "com.example.echomind"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9w3ni0tJvvvBNFbvvRG9apRIgnLHIqbs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
