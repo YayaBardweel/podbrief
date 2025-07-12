@@ -1,6 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-// Define a constant for the primary color to ensure consistency.
 const Color kPrimaryColor = Color(0xFF5E35B1);
 
 class RegisterPage extends StatefulWidget {
@@ -10,134 +10,149 @@ class RegisterPage extends StatefulWidget {
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
-// Private State class for RegisterPage.
 class _RegisterPageState extends State<RegisterPage> {
-  // Controllers for text fields to manage their state.
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _phoneNumberController = TextEditingController(); // Controller for phone number.
 
-  // Method to handle user registration.
-  void _registerUser() {
-    // Trim whitespace from input fields.
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<void> _registerUser() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
-    final phoneNumber = _phoneNumberController.text.trim(); // Get phone number.
 
     if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Passwords don't match")),
-      );
+      _showMessage("Passwords don't match");
+      return;
+    }
+    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+      _showMessage('Please enter email and password');
       return;
     }
 
-    if (phoneNumber.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Phone number cannot be empty")),
-      );
-      return;
-    }
+    setState(() => _isLoading = true);
 
-    // TODO: Firebase Auth registration goes here
+    try {
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      Navigator.pop(context); // Go back to login
+    } on FirebaseAuthException catch (e) {
+      _showMessage(e.message ?? 'Registration failed');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
-  // Build method for the widget tree.
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Padding(
-          padding: const EdgeInsets.all(90.0),
-          child: const Text('Register'),
-        ),
+        title: const Text("Register"),
         backgroundColor: kPrimaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0), // Consistent padding.
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
-            const SizedBox(height: 24.0), // Consistent spacing.
+            const SizedBox(height: 24.0),
+            Center(
+              child: Image.asset(
+                'assets/images/a-logo-for-podbrief.png',
+                height: 220,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Text(
+                'Create an Account',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: kPrimaryColor,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24.0),
 
-            // Email TextField
             _buildTextField(
               controller: _emailController,
               labelText: 'Email',
               prefixIcon: Icons.email,
             ),
+            const SizedBox(height: 16.0),
 
-            const SizedBox(height: 16.0), // Consistent spacing.
-
-            // Password TextField
             _buildTextField(
               controller: _passwordController,
               labelText: 'Password',
               prefixIcon: Icons.lock,
               obscureText: true,
             ),
+            const SizedBox(height: 16.0),
 
-            const SizedBox(height: 16.0), // Consistent spacing.
-
-            // Confirm Password TextField
             _buildTextField(
               controller: _confirmPasswordController,
               labelText: 'Confirm Password',
               prefixIcon: Icons.lock_outline,
               obscureText: true,
             ),
+            const SizedBox(height: 24.0),
 
-            const SizedBox(height: 16.0), // Consistent spacing.
-
-            // Phone Number TextField
-            _buildTextField(
-              controller: _phoneNumberController,
-              labelText: 'Phone Number',
-              prefixIcon: Icons.phone,
-              keyboardType: TextInputType.phone, // Set keyboard type for phone number.
-            ),
-
-            const SizedBox(height: 24.0), // Consistent spacing.
-
-            // Register Button
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _registerUser, // Call the private registration method.
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton(
+                onPressed: _registerUser,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kPrimaryColor,
-                  padding: const EdgeInsets.symmetric(vertical: 14.0), // Consistent padding.
+                  padding:
+                  const EdgeInsets.symmetric(vertical: 14.0),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.0), // Consistent border radius.
+                    borderRadius: BorderRadius.circular(12.0),
                   ),
                 ),
                 child: const Text(
                   'Register',
-                  style: TextStyle(fontSize: 16.0, color: Colors.white), // Ensure text is visible.
+                  style: TextStyle(fontSize: 16.0, color: Colors.white),
                 ),
               ),
             ),
 
-            const SizedBox(height: 24.0), // Consistent spacing.
+            const SizedBox(height: 24.0),
 
-            // Login Link
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text("Already have an account? "),
                 GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context); // Navigate back to the Login page.
-                  },
+                  onTap: () => Navigator.pop(context),
                   child: Text(
                     'Login Now',
                     style: TextStyle(
                       color: kPrimaryColor,
                       fontWeight: FontWeight.bold,
-                    ), // Consistent styling.
+                    ),
                   ),
                 ),
               ],
@@ -148,7 +163,6 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  // Helper method to build TextFields with consistent styling.
   Widget _buildTextField({
     required TextEditingController controller,
     required String labelText,
@@ -162,10 +176,10 @@ class _RegisterPageState extends State<RegisterPage> {
       keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: labelText,
-        prefixIcon: Icon(prefixIcon, color: kPrimaryColor), // Icon color matches primary.
-        labelStyle: TextStyle(color: kPrimaryColor),
+        prefixIcon: Icon(prefixIcon, color: kPrimaryColor),
+        labelStyle: const TextStyle(color: kPrimaryColor),
         focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: kPrimaryColor, width: 2.0), // Thicker border when focused.
+          borderSide: const BorderSide(color: kPrimaryColor, width: 2.0),
           borderRadius: BorderRadius.circular(12.0),
         ),
         border: OutlineInputBorder(
