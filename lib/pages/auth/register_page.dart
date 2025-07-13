@@ -1,8 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
-const Color kPrimaryColor = Color(0xFF5E35B1);
+import 'package:flutter/services.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -12,13 +11,17 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _usernameController = TextEditingController();
 
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
+  // Dispose controllers when not needed
   @override
   void dispose() {
     _emailController.dispose();
@@ -28,205 +31,226 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
-
   Future<void> _registerUser() async {
-    final email = _emailController.text.trim().toLowerCase();
-    final password = _passwordController.text.trim();
-    final confirmPassword = _confirmPasswordController.text.trim();
-    final username = _usernameController.text.trim();
-
-    if (username.isEmpty) {
-      _showMessage('Please enter a username');
-      return;
-    }
-
-    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
-      _showMessage('Please enter all required fields');
-      return;
-    }
-
-    if (password != confirmPassword) {
-      _showMessage("Passwords don't match");
-      return;
-    }
-
-    if (password.length < 6) {
-      _showMessage('Password must be at least 6 characters');
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
-      final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
+      // 1. Create user in Firebase Authentication
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
 
-      // Set displayName in Firebase Auth
-      await cred.user?.updateDisplayName(username);
-      await cred.user?.reload();
+      // 2. Save additional user data to Firestore
+      if (credential.user != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(credential.user!.uid)
+            .set({
+          'username': _usernameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'createdAt': FieldValue.serverTimestamp(),
+          'profileComplete': false,
+        });
 
-      // Save user profile in Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(cred.user!.uid)
-          .set({
-        'uid': cred.user!.uid,
-        'name': username,
-        'email': email,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+        // 3. Send email verification
+        await credential.user!.sendEmailVerification();
 
-      Navigator.pop(context); // Go back to login
+        // 4. Show success and navigate
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registration successful! Please verify your email.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context); // Return to login page
+        }
+      }
     } on FirebaseAuthException catch (e) {
-      _showMessage(e.message ?? 'Registration failed');
+      String errorMessage;
+      switch (e.code) {
+        case 'email-already-in-use':
+          errorMessage = 'This email is already registered.';
+          break;
+        case 'invalid-email':
+          errorMessage = 'Please enter a valid email address.';
+          break;
+        case 'weak-password':
+          errorMessage = 'Password should be at least 6 characters.';
+          break;
+        case 'operation-not-allowed':
+          errorMessage = 'Email/password accounts are not enabled.';
+          break;
+        default:
+          errorMessage = 'Registration failed: ${e.message}';
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Register"),
-        backgroundColor: kPrimaryColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
+        title: const Text('Create Account'),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 24.0),
-            Center(
-              child: Image.asset(
-                'assets/images/a-logo-for-podbrief.png',
-                height: 220,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Center(
-              child: Text(
-                'Create an Account',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: kPrimaryColor,
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _usernameController,
+                decoration: const InputDecoration(
+                  labelText: 'Username',
+                  prefixIcon: Icon(Icons.person),
+                  border: OutlineInputBorder(),
                 ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a username';
+                  }
+                  if (value.length < 3) {
+                    return 'Username must be at least 3 characters';
+                  }
+                  return null;
+                },
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9_\-]')),
+                ],
               ),
-            ),
-            const SizedBox(height: 24.0),
-
-            // Username
-            _buildTextField(
-              controller: _usernameController,
-              labelText: 'Username',
-              prefixIcon: Icons.person,
-            ),
-            const SizedBox(height: 16.0),
-
-            // Email
-            _buildTextField(
-              controller: _emailController,
-              labelText: 'Email',
-              prefixIcon: Icons.email,
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 16.0),
-
-            // Password
-            _buildTextField(
-              controller: _passwordController,
-              labelText: 'Password',
-              prefixIcon: Icons.lock,
-              obscureText: true,
-            ),
-            const SizedBox(height: 16.0),
-
-            // Confirm Password
-            _buildTextField(
-              controller: _confirmPasswordController,
-              labelText: 'Confirm Password',
-              prefixIcon: Icons.lock_outline,
-              obscureText: true,
-            ),
-            const SizedBox(height: 24.0),
-
-            // Register Button
-            SizedBox(
-              width: double.infinity,
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                onPressed: _registerUser,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrimaryColor,
-                  padding:
-                  const EdgeInsets.symmetric(vertical: 14.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.0),
-                  ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email),
+                  border: OutlineInputBorder(),
                 ),
-                child: const Text(
-                  'Register',
-                  style: TextStyle(fontSize: 16.0, color: Colors.white),
-                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your email';
+                  }
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                      .hasMatch(value)) {
+                    return 'Please enter a valid email';
+                  }
+                  return null;
+                },
               ),
-            ),
-
-            const SizedBox(height: 24.0),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text("Already have an account? "),
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Text(
-                    'Login Now',
-                    style: TextStyle(
-                      color: kPrimaryColor,
-                      fontWeight: FontWeight.bold,
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  prefixIcon: const Icon(Icons.lock),
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility : Icons.visibility_off,
                     ),
+                    onPressed: () {
+                      setState(() => _obscurePassword = !_obscurePassword);
+                    },
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String labelText,
-    required IconData prefixIcon,
-    bool obscureText = false,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: labelText,
-        prefixIcon: Icon(prefixIcon, color: kPrimaryColor),
-        labelStyle: const TextStyle(color: kPrimaryColor),
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: kPrimaryColor, width: 2.0),
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a password';
+                  }
+                  if (value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _confirmPasswordController,
+                obscureText: _obscureConfirmPassword,
+                decoration: InputDecoration(
+                  labelText: 'Confirm Password',
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureConfirmPassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(
+                              () => _obscureConfirmPassword = !_obscureConfirmPassword);
+                    },
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please confirm your password';
+                  }
+                  if (value != _passwordController.text) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _registerUser,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+                    : const Text(
+                  'Create Account',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Already have an account? Sign In'),
+              ),
+            ],
+          ),
         ),
       ),
     );
