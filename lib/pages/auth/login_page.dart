@@ -154,6 +154,7 @@ class _login_pageState extends State<login_page> {
               style: TextStyle(
                 color: kPrimaryColor.withOpacity(0.7),
                 fontWeight: FontWeight.bold,
+                decoration: TextDecoration.underline,
               ),
             ),
           ),

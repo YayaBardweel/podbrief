@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -14,6 +15,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _usernameController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -22,6 +24,7 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _usernameController.dispose();
     super.dispose();
   }
 
@@ -32,26 +35,53 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> _registerUser() async {
-    final email = _emailController.text.trim();
+    final email = _emailController.text.trim().toLowerCase();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
+    final username = _usernameController.text.trim();
+
+    if (username.isEmpty) {
+      _showMessage('Please enter a username');
+      return;
+    }
+
+    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+      _showMessage('Please enter all required fields');
+      return;
+    }
 
     if (password != confirmPassword) {
       _showMessage("Passwords don't match");
       return;
     }
-    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
-      _showMessage('Please enter email and password');
+
+    if (password.length < 6) {
+      _showMessage('Password must be at least 6 characters');
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      // Set displayName in Firebase Auth
+      await cred.user?.updateDisplayName(username);
+      await cred.user?.reload();
+
+      // Save user profile in Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(cred.user!.uid)
+          .set({
+        'uid': cred.user!.uid,
+        'name': username,
+        'email': email,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
       Navigator.pop(context); // Go back to login
     } on FirebaseAuthException catch (e) {
@@ -95,13 +125,24 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             const SizedBox(height: 24.0),
 
+            // Username
+            _buildTextField(
+              controller: _usernameController,
+              labelText: 'Username',
+              prefixIcon: Icons.person,
+            ),
+            const SizedBox(height: 16.0),
+
+            // Email
             _buildTextField(
               controller: _emailController,
               labelText: 'Email',
               prefixIcon: Icons.email,
+              keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16.0),
 
+            // Password
             _buildTextField(
               controller: _passwordController,
               labelText: 'Password',
@@ -110,6 +151,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             const SizedBox(height: 16.0),
 
+            // Confirm Password
             _buildTextField(
               controller: _confirmPasswordController,
               labelText: 'Confirm Password',
@@ -118,6 +160,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             const SizedBox(height: 24.0),
 
+            // Register Button
             SizedBox(
               width: double.infinity,
               child: _isLoading
