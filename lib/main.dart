@@ -1,19 +1,17 @@
 import 'package:echomind/pages/auth/auth_gate.dart';
 import 'package:echomind/pages/auth/register_page.dart';
 import 'package:echomind/pages/onboarding_page.dart';
-import 'package:echomind/pages/home_page.dart';        // 👈 import your HomePage
+import 'package:echomind/pages/root_page.dart'; // <-- Import RootPage
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 
-// Primary Color
 const Color kPrimaryColor = Color(0xFF5E35B1);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  // Check onboarding flag
   final prefs = await SharedPreferences.getInstance();
   final bool seenOnboarding = prefs.getBool('seenOnboarding') ?? false;
 
@@ -38,15 +36,13 @@ class MainApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         fontFamily: 'Poppins',
       ),
-
-      // 🔗 Named routes
       routes: {
-        '/home': (context) => const HomePage(),
-        '/register': (context) => const RegisterPage()// 👈 now you can pushReplacementNamed('/home')
+        '/root': (ctx) => const RootPage(),
+        // Add more named routes here if needed, e.g. register, onboarding, etc.
       },
-
-      // Starting screen
-      home: seenOnboarding ? const auth_gate() : const OnboardingPage(),
+      home: seenOnboarding
+          ? const auth_gate()
+          : const OnboardingPage(),
     );
   }
 }
