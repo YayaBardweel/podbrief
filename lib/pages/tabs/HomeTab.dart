@@ -24,8 +24,7 @@ class HomeTab extends StatelessWidget {
           username: username,
           isLoading: isLoading,
           onAddTranscript: () {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(const SnackBar(content: Text('Add Transcript clicked!')));
+
           },
         ),
         TranscriptInputCard(
