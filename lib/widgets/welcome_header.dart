@@ -15,6 +15,9 @@ class WelcomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Handle null or empty username gracefully
+    final displayUsername = (username.isNotEmpty) ? username : 'User';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
       child: Container(
@@ -40,8 +43,9 @@ class WelcomeHeader extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Conditional greeting message based on isLoading
             Text(
-              isLoading ? 'Good Morning...' : 'Good Morning, $username!',
+              isLoading ? 'Loading your profile...' : 'Good Morning, $displayUsername!',
               style: const TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
@@ -50,6 +54,7 @@ class WelcomeHeader extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
+            // Description text
             Text(
               'Summarize your podcasts in seconds.',
               style: TextStyle(
@@ -59,6 +64,7 @@ class WelcomeHeader extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
+            // Add Transcript button
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(

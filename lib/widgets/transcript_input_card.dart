@@ -16,6 +16,8 @@ class TranscriptInputCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(15.0),
+        splashColor: kPrimaryColor.withOpacity(0.3), // Splash color for better UX
+        highlightColor: kPrimaryColor.withOpacity(0.1), // Highlight color for feedback
         child: Card(
           elevation: 8,
           shape: RoundedRectangleBorder(
@@ -26,11 +28,11 @@ class TranscriptInputCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.mic, color: kPrimaryColor, size: 35),
+                Icon(Icons.mic, color: kPrimaryColor, size: 35), // Mic icon for recording
                 const SizedBox(width: 15),
                 Expanded(
                   child: Text(
-                    'Tap to input or paste podcast transcript',
+                    'Tap to start recording or paste your transcript',
                     style: TextStyle(
                       fontSize: 17,
                       color: kTextColorDark,

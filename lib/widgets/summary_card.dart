@@ -1,8 +1,9 @@
+import 'package:echomind/mod/summary_model.dart';
 import 'package:flutter/material.dart';
-import 'package:echomind/constants/colors.dart';
+import 'package:echomind/constants/colors.dart';// Import the correct model
 
 class SummaryCard extends StatelessWidget {
-  final Map<String, String> summary;
+  final Summary summary;  // Update to use Summary model instead of Map
 
   const SummaryCard({Key? key, required this.summary}) : super(key: key);
 
@@ -20,8 +21,9 @@ class SummaryCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Displaying the title
               Text(
-                summary['title']!,
+                summary.title,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -30,8 +32,10 @@ class SummaryCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
+
+              // Displaying the date
               Text(
-                'Summarized on: ${summary['date']}',
+                'Summarized on: ${summary.createdAt.toLocal().toString().split(' ')[0]}', // Convert date to readable format
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey[600],
@@ -39,8 +43,10 @@ class SummaryCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
+
+              // Displaying the summary preview
               Text(
-                summary['preview']!,
+                summary.summaryText,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -50,11 +56,15 @@ class SummaryCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
+
+              // Action buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      // Action to navigate to full summary view (optional)
+                    },
                     icon: const Icon(Icons.visibility, color: kPrimaryColor),
                     label: const Text(
                       'View',
@@ -66,7 +76,9 @@ class SummaryCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   TextButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      // Action to share the summary (optional)
+                    },
                     icon: const Icon(Icons.share, color: kPrimaryColor),
                     label: const Text(
                       'Share',
