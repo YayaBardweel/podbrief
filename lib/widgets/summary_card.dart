@@ -1,9 +1,11 @@
 import 'package:echomind/mod/summary_model.dart';
+import 'package:echomind/pages/FullSummaryPage.dart';
 import 'package:flutter/material.dart';
-import 'package:echomind/constants/colors.dart';// Import the correct model
+import 'package:echomind/constants/colors.dart';
+
 
 class SummaryCard extends StatelessWidget {
-  final Summary summary;  // Update to use Summary model instead of Map
+  final Summary summary;  // Use Summary model instead of Map
 
   const SummaryCard({Key? key, required this.summary}) : super(key: key);
 
@@ -35,7 +37,7 @@ class SummaryCard extends StatelessWidget {
 
               // Displaying the date
               Text(
-                'Summarized on: ${summary.createdAt.toLocal().toString().split(' ')[0]}', // Convert date to readable format
+                'Summarized on: ${summary.createdAt.toLocal().toString().split(' ')[0]}',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey[600],
@@ -63,11 +65,17 @@ class SummaryCard extends StatelessWidget {
                 children: [
                   TextButton.icon(
                     onPressed: () {
-                      // Action to navigate to full summary view (optional)
+                      // Navigate to FullSummaryPage
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => FullSummaryPage(summary: summary),
+                        ),
+                      );
                     },
                     icon: const Icon(Icons.visibility, color: kPrimaryColor),
                     label: const Text(
-                      'View',
+                      'View Full Summary',
                       style: TextStyle(
                         color: kPrimaryColor,
                         fontFamily: 'Poppins',
