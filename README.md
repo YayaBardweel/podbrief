@@ -72,7 +72,7 @@ PodBrief uses the **Ollama** API with **Llama 3.2** to generate advanced summari
 ## Screenshots
 
 ### Login Screen
-![Login Screen](https://github.com/YourUsername/PodBrief/blob/main/assets/images/login_screen.png)
+![Login Screen](assets/images/1.png)
 
 ### Home Screen with Summaries
 ![Home Screen](https://github.com/YourUsername/PodBrief/blob/main/assets/images/home_screen.png)
