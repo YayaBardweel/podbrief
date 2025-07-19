@@ -75,16 +75,16 @@ PodBrief uses the **Ollama** API with **Llama 3.2** to generate advanced summari
 ![Login Screen](assets/images/1.png)
 
 ### Home Screen with Summaries
-![Home Screen](https://github.com/YourUsername/PodBrief/blob/main/assets/images/home_screen.png)
+![Home Screen](assets/images/2.png)
 
 ### History Screen
-![History Screen](https://github.com/YourUsername/PodBrief/blob/main/assets/images/history_screen.png)
+![History Screen](assets/images/3.png)
 
 ### Create a Podcast Summary Screen
-![Create Summary Screen](https://github.com/YourUsername/PodBrief/blob/main/assets/images/create_summary_screen.png)
+![Create Summary Screen](assets/images/4.png)
 
 ### Profile Screen
-![Profile Screen](https://github.com/YourUsername/PodBrief/blob/main/assets/images/profile_screen.png)
+![Profile Screen](assets/images/5.png)
 
 ---
 
